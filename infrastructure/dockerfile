@@ -1,0 +1,26 @@
+FROM python:3.10.5
+
+# Uncomment to use cron service in microservice backend
+# RUN apt-get update && apt-get -y install cron
+
+# Backend setup
+ENV BACKEND_PATH=/opt/django
+RUN mkdir -p $BACKEND_PATH
+WORKDIR $BACKEND_PATH
+
+# Copy files
+COPY backend $BACKEND_PATH/backend
+COPY microservice $BACKEND_PATH/microservice
+COPY manage.py $BACKEND_PATH
+COPY requirements.txt $BACKEND_PATH
+COPY infrastructure/backend-entrypoint.sh /
+
+# Install backend dependencies
+RUN pip install -r requirements.txt
+
+# django will run in port 8000 trough daphne
+EXPOSE 8000
+
+# define the default command to run when starting the container
+RUN ["chmod", "+x", "/backend-entrypoint.sh"]
+ENTRYPOINT [ "/backend-entrypoint.sh" ]
