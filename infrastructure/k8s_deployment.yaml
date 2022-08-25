@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  
+  # Change to microservice deployment name:
+  name: microservice-depl 
+
+spec:
+  replicas: 1
+  selector:
+    matchLabels:      
+
+      # Change to microservice name:
+      app: microservice
+  
+  template:
+    metadata:
+      labels:
+        
+        # Change to microservice name:
+        app: microservice
+    spec:
+      containers:
+        
+        # Change to microservice name:
+        - name: microservice          
+          
+          # Change the following line to the path to obtain the image for the cluster
+          # (which can be docker hub or a personal docker repository):
+          image: aldo7/microservice-django-template:latest

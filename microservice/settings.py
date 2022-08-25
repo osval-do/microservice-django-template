@@ -23,6 +23,11 @@ else:
     ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split(',')
 
 
+# Check required settings 
+assert SECRET_KEY, "Secret key required"
+assert DATABASE_URL, "URL for main database no set"
+
+
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -59,6 +64,8 @@ TEMPLATES = [
     },
 ]
 WSGI_APPLICATION = 'microservice.wsgi.application'
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
 
 
 # Database
@@ -67,6 +74,7 @@ DATABASES = {
     'default': {}
 }
 DATABASES['default'].update(dj_database_url.config(default=DATABASE_URL))
+
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators

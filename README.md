@@ -2,13 +2,10 @@
 
 # Usage instructions
 
-## Secrets file
-In order to use this project, the following file needs to be c
-
 ## Local development
 To execute the project in local mode:
-1. Install [python|https://www.python.org/downloads/]
-2. Install [virtualenv|https://pypi.org/project/virtualenv/]
+1. Install [python](https://www.python.org/downloads/)
+2. Install [virtualenv](https://pypi.org/project/virtualenv/)
 3. Create virualenv: `virtualenv venv`
 4. Install dependiences: `pip3 install -r requirements.txt`
 5. Create the file "local_env.py" in the root folder with the following code:
