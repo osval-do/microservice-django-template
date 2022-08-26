@@ -1,0 +1,57 @@
+## Microservice django app
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: microservice-depl  # <- Change to microservice deployment name
+spec:
+  replicas: 1
+  selector:
+    matchLabels:            
+      app: microservice # <- Change to microservice name  
+  template:
+    metadata:
+      labels:
+        app: microservice # <- Change to microservice name
+    spec:
+      containers:
+        - name: microservice  # <- Change to microservice name          
+          # Change the following line to the path to obtain the image for the cluster
+          # (which can be docker hub or a personal docker repository):
+          image: aldo7/microservice-django-template:latest
+
+---
+
+## Microservice node port
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: microservice-srv # <- Change to microservice service name
+spec:
+  type: NodePort
+  selector:
+    app: microservice # <- Change to microservice name
+  ports:
+    - name: microservice # <- Change to microservice name
+      protocol: TCP      
+      port: 8000
+      targetPort: 8000
+
+---
+
+## Microservice cluster ip
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: microservice-clusterip-srv # <- Change to microservice service name
+spec:
+  type: ClusterIP
+  selector:
+    app: microservice # <- Change to microservice name
+  ports:
+    - name: microservice # <- Change to microservice name
+      protocol: TCP
+      port: 4000
+      targetPort: 4000

@@ -1,0 +1,39 @@
+# Host services available to all microservices
+
+# AMPQ service
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: message-bus-depl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: message-bus
+  template:
+    metadata:
+      labels:
+        app: message-bus
+    spec:
+      containers:
+        - name: message-bus
+          image: rabbitmq
+
+---
+
+# AMPQ cluster ip
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: message-bus-srv
+spec:
+  type: ClusterIP
+  selector:
+    app: message-bus
+  ports:
+    - name: message-bus
+      protocol: TCP
+      port: 5672
+      targetPort: 5672

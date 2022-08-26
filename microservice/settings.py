@@ -27,8 +27,7 @@ else:
 assert SECRET_KEY, "Secret key required"
 assert DATABASE_URL, "URL for main database no set"
 
-
-# Application definition
+# Base django settings
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -36,6 +35,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'dj_cqrs',
     'backend'
 ]
 MIDDLEWARE = [
@@ -110,3 +111,21 @@ STATIC_URL = 'static/'
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# Django Rest Framework setup
+# https://www.django-rest-framework.org/#installation
+REST_FRAMEWORK = {
+    # Use Django's standard `django.contrib.auth` permissions,
+    # or allow read-only access for unauthenticated users.
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
+    ]
+}
+
+
+# Django CQRS setup
+CQRS = {
+    'transport': 'dj_cqrs.transport.RabbitMQTransport',
+    'url': 'amqp://guest:guest@message-bus-srv:5672/'
+}
