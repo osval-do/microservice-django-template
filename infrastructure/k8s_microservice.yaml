@@ -1,57 +1,149 @@
-## Microservice django app
-
 apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: microservice-depl  # <- Change to microservice deployment name
-spec:
-  replicas: 1
-  selector:
-    matchLabels:            
-      app: microservice # <- Change to microservice name  
-  template:
+kind: List
+items:
+
+  ## Microservice django app
+  - kind: Deployment
+    apiVersion: apps/v1
     metadata:
-      labels:
-        app: microservice # <- Change to microservice name
+      name: microservice-depl
     spec:
-      containers:
-        - name: microservice  # <- Change to microservice name          
-          # Change the following line to the path to obtain the image for the cluster
-          # (which can be docker hub or a personal docker repository):
-          image: aldo7/microservice-django-template:latest
+      replicas: 1
+      selector:
+        matchLabels:            
+          app: microservice
+      template:
+        metadata:
+          labels:
+            app: microservice
+        spec:
+          containers:
+            - name: microservice
+              # Change the following line to the path to obtain the image for the cluster
+              # (which can be docker hub or a personal docker repository):
+              image: aldo7/microservice-django-template:latest
+              env:
+                - name: DATABASE_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: m8e-settings
+                      key: DATABASE_PASSWORD
+                - name: DATABASE_URL
+                  value: "postgres://postgres:$(DATABASE_PASSWORD)@microservice-db-srv:9021/django_db"
+                - name: SECRET_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: m8e-settings
+                      key: SECRET_KEY
 
----
+  ## Microservice node port
+  - kind: Service
+    apiVersion: v1
+    metadata:
+      name: microservice-srv
+    spec:
+      type: NodePort
+      selector:
+        app: microservice
+      ports:
+        - name: microservice
+          protocol: TCP      
+          port: 8000
+          targetPort: 8000
 
-## Microservice node port
+  ## Microservice cluster ip
+  - kind: Service
+    apiVersion: v1
+    metadata:
+      name: microservice-clusterip-srv
+    spec:
+      type: ClusterIP
+      selector:
+        app: microservice
+      ports:
+        - name: microservice
+          protocol: TCP
+          port: 4000
+          targetPort: 4000
 
-apiVersion: v1
-kind: Service
-metadata:
-  name: microservice-srv # <- Change to microservice service name
-spec:
-  type: NodePort
-  selector:
-    app: microservice # <- Change to microservice name
-  ports:
-    - name: microservice # <- Change to microservice name
-      protocol: TCP      
-      port: 8000
-      targetPort: 8000
+  # Database volume
+  - kind: PersistentVolume
+    apiVersion: v1
+    metadata:
+      name: microservice-db-pv-volume
+      labels:
+        type: local
+        app: postgres
+    spec:
+      storageClassName: manual
+      capacity:
+        storage: 5Gi
+      accessModes:
+        - ReadWriteMany
+      hostPath:
+        path: "/mnt/data"
 
----
+  # Database volume claim
+  - kind: PersistentVolumeClaim
+    apiVersion: v1
+    metadata:
+      name: microservice-db-pv-claim
+      labels:
+        app: postgres
+    spec:
+      storageClassName: manual
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 5Gi
 
-## Microservice cluster ip
+  # Microservice DB (Postgres)
+  - kind: Deployment
+    apiVersion: apps/v1
+    metadata:
+      name: microservice-db-depl
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:            
+          app: microservice-db
+      template:
+        metadata:
+          labels:
+            app: microservice-db
+        spec:
+          containers:
+            - name: microservice-db
+              image: postgres:10.4
+              imagePullPolicy: "IfNotPresent"
+              ports:
+                - containerPort: 5432
+              env:
+                - name: POSTGRES_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: m8e-settings
+                      key: DATABASE_PASSWORD
+              volumeMounts:
+                - mountPath: /var/lib/postgresql/data
+                  name: postgredb
+          volumes:
+            - name: postgredb
+              persistentVolumeClaim:
+                claimName: microservice-db-pv-claim
 
-apiVersion: v1
-kind: Service
-metadata:
-  name: microservice-clusterip-srv # <- Change to microservice service name
-spec:
-  type: ClusterIP
-  selector:
-    app: microservice # <- Change to microservice name
-  ports:
-    - name: microservice # <- Change to microservice name
-      protocol: TCP
-      port: 4000
-      targetPort: 4000
+  # Microservice DB cluster ip
+  - kind: Service
+    apiVersion: v1
+    metadata:
+      name: microservice-db-srv
+    spec:
+      type: ClusterIP
+      selector:
+        app: microservice-db
+      ports:
+        - name: microservice-db
+          protocol: TCP
+          port: 9021
+          targetPort: 9021

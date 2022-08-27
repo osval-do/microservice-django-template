@@ -9,23 +9,28 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 
-# Read settings
+# Load settings
 if os.path.exists('local_env.py'):
     import local_env
     DEBUG = local_env.DEBUG
     SECRET_KEY = local_env.SECRET_KEY
     DATABASE_URL = local_env.DATABASE_URL
-    ALLOWED_HOSTS = local_env.ALLOWED_HOSTS.split(',')
+    ALLOWED_HOSTS = local_env.ALLOWED_HOSTS
 else:
     DEBUG = os.environ.get('DEBUG')
     SECRET_KEY = os.environ.get('SECRET_KEY')
     DATABASE_URL = os.environ.get('DATABASE_URL')
-    ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split(',')
+    ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS')
+        
+if not SECRET_KEY:
+    SECRET_KEY = 'django-insecure-%q3&3#hDg7o*=fmj1mDFjdkf8#$%kCvm(_5a9c2)u51gmre((1%w+3nqh!-'
+if not DATABASE_URL:
+    DATABASE_URL = 'postgres://USER:PASS@microservice-db-srv:9021/microservice'
+if not ALLOWED_HOSTS:
+    ALLOWED_HOSTS = ['*']
+else:
+    ALLOWED_HOSTS = ALLOWED_HOSTS.split(',')
 
-
-# Check required settings 
-assert SECRET_KEY, "Secret key required"
-assert DATABASE_URL, "URL for main database no set"
 
 # Base django settings
 INSTALLED_APPS = [
@@ -41,6 +46,7 @@ INSTALLED_APPS = [
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -106,7 +112,9 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 STATIC_URL = 'static/'
-
+STATIC_ROOT = os.path.join(BASE_DIR,'static/')
+if not os.path.exists(STATIC_ROOT):
+    os.mkdir(STATIC_ROOT)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
@@ -129,3 +137,4 @@ CQRS = {
     'transport': 'dj_cqrs.transport.RabbitMQTransport',
     'url': 'amqp://guest:guest@message-bus-srv:5672/'
 }
+

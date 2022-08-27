@@ -1,11 +1,5 @@
 FROM python:3.10.5
 
-# Default environment vars values
-env SECRET_KEY=%q3&3#hDg7o*=fmj1mDFjdkf8#$%kCvm(_5a9c2)u51gmre((1%w+3nqh!-
-env DATABASE_URL=sqlite:///db.sqlite3
-env ALLOWED_HOSTS=*
-env DEBUG=True
-
 # Uncomment to use cron service in microservice backend
 # RUN apt-get update && apt-get -y install cron
 
@@ -23,6 +17,9 @@ COPY infrastructure/backend-entrypoint.sh /
 
 # Install backend dependencies
 RUN pip install -r requirements.txt
+
+# Gather static files
+RUN python manage.py collectstatic --noinput
 
 # django will run in port 8000 trough daphne
 EXPOSE 8000

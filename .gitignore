@@ -190,5 +190,7 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-# microservice settings
+# Custom settings
 local_env.py
+static/
+.vscode

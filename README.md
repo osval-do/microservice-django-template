@@ -1,9 +1,11 @@
 # Django microservice template
 A template for creating Django microservices that include support for Docker, Kubernetes, CI/CD, data synchronization and more!
 
-## When to use this template
-A microservice based on this template can help solve two different situations:
-a- In the 
+This repository contains a template that can be used or aid in the following situations:
+- Building a system developed by multiple teams. Each responsible for their own microservice.
+- Developing a complex system based on individual modules.
+- Add resiliency in deployment, by only updating parts of a system and having lose connection between microservices.
+- Automatic management of deployment and scaling.
 
 # Usage instructions
 
@@ -11,32 +13,109 @@ a- In the
 To execute the project in local mode:
 1. Install [python](https://www.python.org/downloads/)
 2. Install [virtualenv](https://pypi.org/project/virtualenv/)
-3. Create virualenv: `virtualenv venv`
-4. Activate virtual enviroment: `source venv/bin/activate`
-5. Install dependiences: `pip3 install -r requirements.txt`
+3. Create virualenv:
+    ```bash
+    virtualenv venv
+    ```
+4. Activate virtual enviroment:
+    ```bash
+    source venv/bin/activate
+    ```
+5. Install dependiences: 
+    ```bash
+    pip3 install -r requirements.txt
+    ```
 6. Create the file "local_env.py" in the root folder with the following code:
-```python
-# Please generate an unique key:
-SECRET_KEY = '%q3&3#hDg7o*=fmj1md6%kvm(_5a9c2)u51gmre((1%w+3nqh!-'
-DATABASE_URL = 'sqlite:///db.sqlite3'
-ALLOWED_HOSTS = "localhost,127.0.0.1"
-DEBUG = True
-```
-7. Run server: `python3 manage.py runserver`
+    ```python
+    # Please generate an unique key:
+    SECRET_KEY = '%q3&3#hDg7o*=fmj1md6%kvm(_5a9c2)u51gmre((1%w+3nqh!-'
+    DATABASE_URL = 'sqlite:///db.sqlite3'
+    ALLOWED_HOSTS = "localhost,127.0.0.1"
+    DEBUG = True
+    ```
+7. Run server: 
+    ```bash
+    python3 manage.py runserver
+    ```
+### Settings and environment vars
 
-## Docker
+While in development, a local not versioned file is used for adjusting Django settings. This file, named `local_env.py`, is located at the root of the project. If the file doesn't exists the Django will try to load its settings from the OS or container environment. The names of the variables are the same in both cases.
 
-### Manually build container
-If there is a docker environment where the repository is located, you can build the container with the following command:
+This is the list of the variables:
+- `SECRET_KEY`: The key used by Django for encryption of tokens.
+- `DATABASE_URL`: A well formed URL for the main database for the microservice.
+- `ALLOWED_HOSTS`: A CSV of ips/domains that can access the server.
+- `DEBUG`: Enables the debug mode in Django.
+
+### Testing the docker container
+
+The dockerfile used to generate a container for the microservice is located in infrastructure/dockerfile. Tools like [minikube](https://minikube.sigs.k8s.io/docs/start/) or [docker desktop](https://www.docker.com/products/docker-desktop/) can be used to test locally the microservice as a container.
+
+This command will generate an image:
 ```bash
-docker build -f infrastructure/dockerfile .
+docker build -f infrastructure/dockerfile -t your_microservice_image_name .
 ```
-
-### Push image
-You can generate an image of the microservice 
+You can run the image with this command:
+```bash
+docker run your_microservice_image_name
+```
+The image can be pushed into a container registry with:
+```bash
+docker push your_microservice_image_name
+```
 
 ## Kubernetes deployment
+The following chapters explain the installation and manual use of the kubernetes scripts and configurations contained in the template.
 
+### 1. Namespaces
+A kubernetes namespace is used to isolate this microservice and its resources from other microservices. Not only to prevent collisions with names but for security and management.
+An unique namespace should be decided before starting development a new microservice based on this template.
+
+In the following commands the {microservice-space} is used to identify this name, this needs to be replaced by yours.
+
+The following command will create namespace for the microservice:
+```bash
+kubectl create namespace {microservice-space}
+```
+
+### 2. Secrets
+To securely transfer confidential configurations to running microservices, is necessary to define them in the namespace of the microservice. This secrets will be passed as environment variables. Use this command to generate them:
+```bash
+kubectl --namespace={microservice-space} create secret generic m8e-settings \
+  --from-literal=DATABASE_PASSWORD=psqlpass \
+  --from-literal=SECRET_KEY='%q3&3#hDg7o*=fmj1md6%kvm(_5a9c2)u51gmre((1%w+3nqh!-'  
+```
+
+
+### 3. Generate the resources
+To manually generate the microservices kubernetes resources use the following command:
+```bash
+kubectl --namespace={microservice-space} apply -f infrastructure/k8s_microservice.yaml
+```
+
+### 4. Rollout changes to code
+If the code has changed, the image of the container needs to be built again. Use the commands explained in "Testing the docker container". Once uploaded to the image registry server execute the following command to refresh the pods running your microservice:
+```bash
+kubectl --namespace={microservice-space} rollout restart deployment microservice-depl
+```
+
+### 5. Verify state of app and debugging
+The default template generates two pods, one with the Django server and the other with a PostgreSQL database.
+Their state can be checked with this command:
+```bash
+kubectl --namespace=microservice-space get pods
+```
+Wich will print a list with the pods in the namespace of our microservice, similar to this one:
+```
+NAME                                    READY   STATUS    RESTARTS   AGE
+microservice-db-depl-5699f8dc4f-vshqz   1/1     Running   0          24m
+microservice-depl-76c78986c4-qsk75      1/1     Running   0          58s
+```
+The STATUS column will indicate will indicate the state of the pod, and will also tell us if there are any issues with it. In such case, the command:
+```bash
+kubectl --namespace=microservice-space logs microservice-depl-76c78986c4-qsk75
+```
+Will print the terminal output of the container (similar to `docker logs` command) and can be used for error diagnostics.
 
 
 ## Continuous Integration/Deployment
@@ -48,4 +127,10 @@ You can generate an image of the microservice
 
 # Backend programming
 
-## 
+## Authorization and logins
+
+## Message bus
+
+## Data synchronization
+
+## Scheduled jobs
