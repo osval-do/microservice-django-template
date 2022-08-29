@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: List
 items:
 
-  ## Microservice django app
+  # Microservice django app
   - kind: Deployment
     apiVersion: apps/v1
     metadata:
@@ -22,21 +22,24 @@ items:
               # Change the following line to the path to obtain the image for the cluster
               # (which can be docker hub or a personal docker repository):
               image: aldo7/microservice-django-template:latest
+              envFrom:
+                - secretRef:
+                    name: m8e-settings
               env:
-                - name: DATABASE_PASSWORD
+                - name: POSTGRES_PASSWORD
                   valueFrom:
                     secretKeyRef:
                       name: m8e-settings
                       key: DATABASE_PASSWORD
                 - name: DATABASE_URL
-                  value: "postgres://postgres:$(DATABASE_PASSWORD)@microservice-db-srv:9021/django_db"
-                - name: SECRET_KEY
-                  valueFrom:
-                    secretKeyRef:
-                      name: m8e-settings
-                      key: SECRET_KEY
+                  value: "postgres://postgres:$(POSTGRES_PASSWORD)@microservice-db-cip:5432/django_db"
+                - name: ALLOWED_HOSTS
+                # In production this value should be the host:
+                  value: "*"
+                - name: DEBUG
+                  value: "True"
 
-  ## Microservice node port
+  # Microservice node port
   - kind: Service
     apiVersion: v1
     metadata:
@@ -51,11 +54,11 @@ items:
           port: 8000
           targetPort: 8000
 
-  ## Microservice cluster ip
+  # Microservice cluster ip
   - kind: Service
     apiVersion: v1
     metadata:
-      name: microservice-clusterip-srv
+      name: microservice-cip
     spec:
       type: ClusterIP
       selector:
@@ -70,33 +73,29 @@ items:
   - kind: PersistentVolume
     apiVersion: v1
     metadata:
-      name: microservice-db-pv-volume
-      labels:
-        type: local
-        app: postgres
+      name: microservice-db-vol
     spec:
       storageClassName: manual
       capacity:
-        storage: 5Gi
+        storage: 4Gi
       accessModes:
         - ReadWriteMany
       hostPath:
-        path: "/mnt/data"
+        # Note: This path should be unique for your microservice in minikube:
+        path: "/mnt/data/microservice"
 
   # Database volume claim
   - kind: PersistentVolumeClaim
     apiVersion: v1
     metadata:
-      name: microservice-db-pv-claim
-      labels:
-        app: postgres
+      name: microservice-db-pvc
     spec:
       storageClassName: manual
       accessModes:
         - ReadWriteMany
       resources:
         requests:
-          storage: 5Gi
+          storage: 4Gi
 
   # Microservice DB (Postgres)
   - kind: Deployment
@@ -115,11 +114,13 @@ items:
         spec:
           containers:
             - name: microservice-db
-              image: postgres:10.4
+              image: postgres:14.5
               imagePullPolicy: "IfNotPresent"
               ports:
                 - containerPort: 5432
               env:
+                - name: POSTGRES_DB
+                  value: django_db
                 - name: POSTGRES_PASSWORD
                   valueFrom:
                     secretKeyRef:
@@ -131,13 +132,13 @@ items:
           volumes:
             - name: postgredb
               persistentVolumeClaim:
-                claimName: microservice-db-pv-claim
+                claimName: microservice-db-pvc
 
   # Microservice DB cluster ip
   - kind: Service
     apiVersion: v1
     metadata:
-      name: microservice-db-srv
+      name: microservice-db-cip
     spec:
       type: ClusterIP
       selector:
@@ -145,5 +146,25 @@ items:
       ports:
         - name: microservice-db
           protocol: TCP
-          port: 9021
-          targetPort: 9021
+          port: 5432
+          targetPort: 5432
+
+  # Microservice ingress config
+  - kind: Ingress
+    apiVersion: networking.k8s.io/v1  
+    metadata:
+      name: microservice-ingress
+      annotations:
+        kubernetes.io/ingress.class: nginx
+    spec:
+      rules:
+        - host: myhost.com
+          http:
+            paths:
+              - path: /microservice
+                pathType: Prefix
+                backend:
+                  service:
+                    name: microservice-cip
+                    port:
+                      number: 4000

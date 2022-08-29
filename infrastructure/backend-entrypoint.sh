@@ -1,8 +1,5 @@
 #!/usr/bin/env sh
 
-# Collect static files
-python manage.py collectstatic --noinput
-
 # Apply any pending database migration
 python manage.py migrate
 

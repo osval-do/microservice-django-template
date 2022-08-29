@@ -67,7 +67,10 @@ docker push your_microservice_image_name
 ## Kubernetes deployment
 The following chapters explain the installation and manual use of the kubernetes scripts and configurations contained in the template.
 
-### 1. Namespaces
+### Installation
+A cloud based kubernetes solution can be used for production. For small scale or local development [minikube](https://minikube.sigs.k8s.io/docs/start/) is recommended.
+
+### Namespaces
 A kubernetes namespace is used to isolate this microservice and its resources from other microservices. Not only to prevent collisions with names but for security and management.
 An unique namespace should be decided before starting development a new microservice based on this template.
 
@@ -78,32 +81,32 @@ The following command will create namespace for the microservice:
 kubectl create namespace {microservice-space}
 ```
 
-### 2. Secrets
+### Secrets
 To securely transfer confidential configurations to running microservices, is necessary to define them in the namespace of the microservice. This secrets will be passed as environment variables. Use this command to generate them:
 ```bash
-kubectl --namespace={microservice-space} create secret generic m8e-settings \
+kubectl -n={microservice-space} create secret generic m8e-settings \
   --from-literal=DATABASE_PASSWORD=psqlpass \
   --from-literal=SECRET_KEY='%q3&3#hDg7o*=fmj1md6%kvm(_5a9c2)u51gmre((1%w+3nqh!-'  
 ```
 
 
-### 3. Generate the resources
+### Generate the resources
 To manually generate the microservices kubernetes resources use the following command:
 ```bash
-kubectl --namespace={microservice-space} apply -f infrastructure/k8s_microservice.yaml
+kubectl -n={microservice-space} apply -f infrastructure/k8s_microservice.yaml
 ```
 
-### 4. Rollout changes to code
+### Rollout changes to code
 If the code has changed, the image of the container needs to be built again. Use the commands explained in "Testing the docker container". Once uploaded to the image registry server execute the following command to refresh the pods running your microservice:
 ```bash
-kubectl --namespace={microservice-space} rollout restart deployment microservice-depl
+kubectl -n={microservice-space} rollout restart deployment microservice-depl
 ```
 
-### 5. Verify state of app and debugging
+### Debugging
 The default template generates two pods, one with the Django server and the other with a PostgreSQL database.
 Their state can be checked with this command:
 ```bash
-kubectl --namespace=microservice-space get pods
+kubectl -n={microservice-space} get pods
 ```
 Wich will print a list with the pods in the namespace of our microservice, similar to this one:
 ```
@@ -111,12 +114,17 @@ NAME                                    READY   STATUS    RESTARTS   AGE
 microservice-db-depl-5699f8dc4f-vshqz   1/1     Running   0          24m
 microservice-depl-76c78986c4-qsk75      1/1     Running   0          58s
 ```
-The STATUS column will indicate will indicate the state of the pod, and will also tell us if there are any issues with it. In such case, the command:
+The STATUS and RESTARTS columns can tell us if the containers are behaving incorrectly. The next command will print the terminal output of the container (similar to `docker logs` command) and can be used for error diagnostics:
 ```bash
-kubectl --namespace=microservice-space logs microservice-depl-76c78986c4-qsk75
+kubectl -n={microservice-space} logs microservice-depl-76c78986c4-qsk75
 ```
-Will print the terminal output of the container (similar to `docker logs` command) and can be used for error diagnostics.
 
+### Deleting the microservice resources
+For removing the resources created use the following command:
+```bash
+kubectl -n={microservice-space} delete -f infrastructure/k8s_microservice.yaml
+```
+Warning: The command `delete` might not remove data saved in persistent volumes like the one used for PostgreSQL.
 
 ## Continuous Integration/Deployment
 
