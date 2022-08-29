@@ -99,7 +99,7 @@ kubectl -n={microservice-space} apply -f infrastructure/k8s_microservice.yaml
 ### Rollout changes to code
 If the code has changed, the image of the container needs to be built again. Use the commands explained in "Testing the docker container". Once uploaded to the image registry server execute the following command to refresh the pods running your microservice:
 ```bash
-kubectl -n={microservice-space} rollout restart deployment microservice-depl
+kubectl -n={microservice-space} rollout restart deployment microservice-dpl
 ```
 
 ### Debugging
@@ -112,11 +112,11 @@ Wich will print a list with the pods in the namespace of our microservice, simil
 ```
 NAME                                    READY   STATUS    RESTARTS   AGE
 microservice-db-depl-5699f8dc4f-vshqz   1/1     Running   0          24m
-microservice-depl-76c78986c4-qsk75      1/1     Running   0          58s
+microservice-dpl-76c78986c4-qsk75      1/1     Running   0          58s
 ```
 The STATUS and RESTARTS columns can tell us if the containers are behaving incorrectly. The next command will print the terminal output of the container (similar to `docker logs` command) and can be used for error diagnostics:
 ```bash
-kubectl -n={microservice-space} logs microservice-depl-76c78986c4-qsk75
+kubectl -n={microservice-space} logs microservice-dpl-76c78986c4-qsk75
 ```
 
 ### Deleting the microservice resources
