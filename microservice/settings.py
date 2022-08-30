@@ -16,12 +16,20 @@ if os.path.exists('local_env.py'):
     SECRET_KEY = local_env.SECRET_KEY
     DATABASE_URL = local_env.DATABASE_URL
     ALLOWED_HOSTS = local_env.ALLOWED_HOSTS
+    AMPQ_URL = local_env.AMPQ_URL
+    JWT_VERIFY_KEY = local_env.JWT_VERIFY_KEY
+    JWT_SIGN_KEY = local_env.JWT_SIGN_KEY
 else:
     DEBUG = os.environ.get('DEBUG')
     SECRET_KEY = os.environ.get('SECRET_KEY')
     DATABASE_URL = os.environ.get('DATABASE_URL')
     ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS')
-        
+    AMPQ_URL = os.environ.get('AMPQ_URL')
+    JWT_VERIFY_KEY = os.environ.get('JWT_VERIFY_KEY')
+    JWT_SIGN_KEY = os.environ.get('JWT_SIGN_KEY')
+
+
+# Process loaded settings
 if not SECRET_KEY:
     SECRET_KEY = 'django-insecure-%q3&3#hDg7o*=fmj1mDFjdkf8#$%kCvm(_5a9c2)u51gmre((1%w+3nqh!-'
 if not DATABASE_URL:
@@ -30,6 +38,8 @@ if not ALLOWED_HOSTS:
     ALLOWED_HOSTS = ['*']
 else:
     ALLOWED_HOSTS = ALLOWED_HOSTS.split(',')
+if not JWT_SIGN_KEY or JWT_SIGN_KEY == '0':
+    JWT_SIGN_KEY = None
 
 
 # Base django settings
@@ -42,7 +52,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'dj_cqrs',
-    'backend'
+    'backend',
+    'rest_framework_simplejwt',
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -129,13 +140,24 @@ REST_FRAMEWORK = {
     # or allow read-only access for unauthenticated users.
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
-    ]
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
 }
 
 
 # Django CQRS setup
 CQRS = {
     'transport': 'dj_cqrs.transport.RabbitMQTransport',
-    'url': 'amqp://guest:guest@message-bus-srv:5672/'
+    'url': AMPQ_URL
 }
 
+
+# JWT settings
+# https://django-rest-framework-simplejwt.readthedocs.io/en/latest/settings.html
+SIMPLE_JWT = {
+    'ALGORITHM': 'RSA',
+    'SIGNING_KEY': JWT_SIGN_KEY,
+    'VERIFYING_KEY': JWT_VERIFY_KEY,
+}

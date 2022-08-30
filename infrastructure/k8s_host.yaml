@@ -1,39 +1,86 @@
 # Host services available to all microservices
-
-# AMPQ service
-
 apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: message-bus-depl
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: message-bus
-  template:
+kind: List
+items:
+
+  # Database volume
+  - kind: PersistentVolume
+    apiVersion: v1
     metadata:
-      labels:
-        app: message-bus
+      name: message-broker-pv
     spec:
-      containers:
-        - name: message-bus
-          image: rabbitmq
+      storageClassName: manual
+      capacity:
+        storage: 4Gi
+      accessModes:
+        - ReadWriteMany
+      hostPath:
+        # Note: This path should be unique for your microservice in minikube:
+        path: "/mnt/data/rabbitmq"
 
----
+  # RabbitMQ as AMPQ
+  - kind: StatefulSet
+    apiVersion: apps/v1
+    metadata:
+      name: message-broker
+    spec:
+      replicas: 1
+      selector:
+        matchLabels:
+          app: message-broker
+      template:
+        metadata:
+          labels:
+            app: message-broker
+        spec:
+          containers:
+            - name: message-broker
+              image: rabbitmq:3.10.7-management
+              imagePullPolicy: "IfNotPresent"
+              ports:
+                - containerPort: 5672
+              volumeMounts:
+                - mountPath: /var/lib/rabbitmq
+                  name: rabbitmq
+      volumeClaimTemplates:
+      - metadata:
+          name: rabbitmq
+        spec:
+          storageClassName: manual
+          accessModes:
+            - ReadWriteMany
+          resources:
+            requests:
+              storage: 4Gi
 
-# AMPQ cluster ip
 
-apiVersion: v1
-kind: Service
-metadata:
-  name: message-bus-srv
-spec:
-  type: ClusterIP
-  selector:
-    app: message-bus
-  ports:
-    - name: message-bus
-      protocol: TCP
-      port: 5672
-      targetPort: 5672
+  # AMPQ cluster ip
+  - kind: Service
+    apiVersion: v1
+    metadata:
+      name: message-broker-cip
+    spec:
+      type: ClusterIP
+      selector:
+        app: message-broker
+      ports:
+        - name: message-broker
+          protocol: TCP
+          port: 5672
+          targetPort: 5672
+
+
+  # AMPQ node port
+  - kind: Service
+    apiVersion: v1
+    metadata:
+      name: message-broker-np
+    spec:
+      type: NodePort
+      selector:
+        app: message-broker
+      ports:
+        - name: message-broker
+          protocol: TCP      
+          port: 5672
+          targetPort: 5672

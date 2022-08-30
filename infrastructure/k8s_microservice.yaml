@@ -1,3 +1,6 @@
+# TODO parse "m8e-host" -> host namespace
+# TODO parse "microservice" ->  microservice name
+
 apiVersion: apps/v1
 kind: List
 items:
@@ -31,13 +34,32 @@ items:
                     secretKeyRef:
                       name: m8e-settings
                       key: DATABASE_PASSWORD
-                - name: DATABASE_URL
-                  value: "postgres://postgres:$(POSTGRES_PASSWORD)@microservice-db-cip:5432/django_db"
+                - name: SECRET_KEY
+                  valueFrom:
+                    secretKeyRef:
+                        name: m8e-settings
+                        key: SECRET_KEY
+                - name: JWT_VERIFY_KEY
+                  valueFrom:
+                    secretKeyRef:
+                        name: m8e-settings
+                        key: JWT_VERIFY_KEY
+                - name: JWT_SIGN_KEY
+                  valueFrom:
+                    secretKeyRef:
+                        name: m8e-settings
+                        key: JWT_SIGN_KEY
+                - name: AMQP_URL
+                  value: "amqp://guest:guest@message-broker-np.m8e-host:5672/"
                 - name: ALLOWED_HOSTS
                 # In production this value should be the host:
                   value: "*"
                 - name: DEBUG
                   value: "True"
+                - name: DATABASE_URL
+                  value: "postgres://postgres:$(POSTGRES_PASSWORD)@microservice-db-cip:5432/django_db"
+
+                
 
   # Microservice node port
   - kind: Service
@@ -84,24 +106,11 @@ items:
         # Note: This path should be unique for your microservice in minikube:
         path: "/mnt/data/microservice"
 
-  # Database volume claim
-  - kind: PersistentVolumeClaim
-    apiVersion: v1
-    metadata:
-      name: microservice-db-pvc
-    spec:
-      storageClassName: manual
-      accessModes:
-        - ReadWriteMany
-      resources:
-        requests:
-          storage: 4Gi
-
   # Microservice DB (Postgres)
-  - kind: Deployment
+  - kind: StatefulSet
     apiVersion: apps/v1
     metadata:
-      name: microservice-db-dpl
+      name: microservice-db
     spec:
       replicas: 1
       selector:
@@ -129,10 +138,16 @@ items:
               volumeMounts:
                 - mountPath: /var/lib/postgresql/data
                   name: postgredb
-          volumes:
-            - name: postgredb
-              persistentVolumeClaim:
-                claimName: microservice-db-pvc
+      volumeClaimTemplates:
+      - metadata:
+          name: postgredb
+        spec:
+          storageClassName: manual
+          accessModes:
+            - ReadWriteMany
+          resources:
+            requests:
+              storage: 4Gi
 
   # Microservice DB cluster ip
   - kind: Service
