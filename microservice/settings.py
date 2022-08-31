@@ -8,7 +8,6 @@ import dj_database_url
 BASE_DIR = Path(__file__).resolve().parent.parent
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 
-
 # Load settings
 if os.path.exists('local_env.py'):
     import local_env
@@ -51,9 +50,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework_simplejwt',
     'dj_cqrs',
     'backend',
-    'rest_framework_simplejwt',
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -69,7 +68,7 @@ ROOT_URLCONF = 'microservice.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(PROJECT_ROOT, "templates")],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -126,6 +125,9 @@ STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR,'static/')
 if not os.path.exists(STATIC_ROOT):
     os.mkdir(STATIC_ROOT)
+STATICFILES_DIRS = [
+    "microservice/static", 
+]
 
 
 # Default primary key field type

@@ -173,7 +173,7 @@ items:
         kubernetes.io/ingress.class: nginx
     spec:
       rules:
-        - host: m8ehost.com
+        - host: localhost
           http:
             paths:
               - path: /microservice

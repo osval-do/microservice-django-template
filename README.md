@@ -24,15 +24,19 @@ To manually execute the Django application in local mode:
 2. Install [virtualenv](https://pypi.org/project/virtualenv/)
 3. Create virualenv:
     ```bash
-    virtualenv venv
+    virtualenv .venv
     ```
 4. Activate virtual enviroment:
     ```bash
-    source venv/bin/activate
+    source .venv/bin/activate
     ```
 5. Install dependiences: 
     ```bash
     pip3 install -r requirements.txt
+    ```
+6. Collect static files:
+    ```bash
+    python manage.py collectstatic --noinput
     ```
 6. Create the file "local_env.py" in the root folder with the following code:
     ```python
@@ -41,6 +45,7 @@ To manually execute the Django application in local mode:
     DATABASE_URL = 'sqlite:///db.sqlite3'
     ALLOWED_HOSTS = "localhost,127.0.0.1"
     DEBUG = True
+    AMPQ_URL = None
     ```
 7. Run server: 
     ```bash
@@ -90,6 +95,7 @@ The following chapters explain the installation and manual use of the kubernetes
     - For small scale or local development [minikube](https://minikube.sigs.k8s.io/docs/start/) is recommended.
     - A cloud based kubernetes solution can be used for production. 
 - A container image registry.
+- A configured ingress controller, for example [ingress-nginx](https://kubernetes.github.io/ingress-nginx/deploy/).
 
 ## Namespaces
 A kubernetes namespace is used to isolate this microservice and its resources from other microservices. Not only to prevent collisions with names but for security and management.
