@@ -157,7 +157,8 @@ CQRS = {
 # JWT settings
 # https://django-rest-framework-simplejwt.readthedocs.io/en/latest/settings.html
 SIMPLE_JWT = {
-    'ALGORITHM': 'RSA',
+    'ALGORITHM': 'RS512',
     'SIGNING_KEY': JWT_SIGN_KEY,
     'VERIFYING_KEY': JWT_VERIFY_KEY,
+    'UPDATE_LAST_LOGIN': True
 }

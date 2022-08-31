@@ -16,8 +16,19 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from django.urls import include
+from django.conf import settings
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api-auth/', include('rest_framework.urls'))
+    path('admin/', admin.site.urls),  
+    # Add here the urls of your microservice:
+      
 ]
+
+# Include auth endpoints if signing key is set
+if settings.JWT_SIGN_KEY:
+    urlpatterns.append(path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),)
+    urlpatterns.append(path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),)
