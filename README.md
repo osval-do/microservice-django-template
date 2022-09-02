@@ -17,6 +17,9 @@ Microservices allows use to tackle development of complex systems, and thus, the
 - JWT
 - Devops, AutoDevOps
 
+## Diagram of this template
+![Image](../blob/main/docs/microservice/k8s_diagram.png?raw=true)
+
 #  Local development
 
 To manually execute the Django application in local mode:

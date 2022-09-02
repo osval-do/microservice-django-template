@@ -1,0 +1,35 @@
+name: deploy_selfhosted
+
+# Deploys the microservice as an image and updates kubernetes changes on
+# the same location where the workflow is running.
+
+on:
+  push:
+    branches: [ "main" ]      
+    paths:
+      - 'microservice/**'
+      - 'backend/**'
+      # add here other django apps and folders here
+
+jobs:
+  production-deploy:  
+    #if: secrets.USE_SELF_HOSTED
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v3
+      - run: docker build -t $IMAGE_NAME .
+        env:
+          IMAGE_NAME: ${{ secrets.IMAGE_NAME }}
+      - run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD $DOCKER_SERVER
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}      
+          DOCKER_SERVER: ${{ secrets.DOCKER_SERVER }}      
+      - run: docker push IMAGE_NAME
+        env:
+          IMAGE_NAME: ${{ secrets.IMAGE_NAME }}
+      - run: kubectl -n=$MICROSERVICE_NAMESPACE rollout restart deployment $MICROSERVICE_NAME-depl
+        env:
+          MICROSERVICE_NAME: ${{ secrets.MICROSERVICE_NAME }}
+          MICROSERVICE_NAMESPACE: ${{ secrets.MICROSERVICE_NAMESPACE }}
+
