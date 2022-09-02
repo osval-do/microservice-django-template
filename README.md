@@ -18,7 +18,7 @@ Microservices allows use to tackle development of complex systems, and thus, the
 - Devops, AutoDevOps
 
 ## Diagram of this template
-![Image](../blob/main/docs/microservice/k8s_diagram.png?raw=true)
+![Image](docs/microservice/k8s_diagram.png?raw=true)
 
 #  Local development
 
