@@ -192,6 +192,7 @@ venv.bak/
 
 # Custom settings
 local_env.py
+env.py
 .vscode
 
 # Static collected folder

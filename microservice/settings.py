@@ -1,23 +1,24 @@
 from pathlib import Path
 import os
 import dj_database_url
-
+import sys
 
 # Setup paths
 ## Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 
+
 # Load settings
 if os.path.exists('local_env.py'):
     import local_env
-    DEBUG = local_env.DEBUG
+    DEBUG = local_env.DEBUG if hasattr(local_env, 'DEBUG') else None
     SECRET_KEY = local_env.SECRET_KEY
     DATABASE_URL = local_env.DATABASE_URL
-    ALLOWED_HOSTS = local_env.ALLOWED_HOSTS
-    AMPQ_URL = local_env.AMPQ_URL
     JWT_VERIFY_KEY = local_env.JWT_VERIFY_KEY
     JWT_SIGN_KEY = local_env.JWT_SIGN_KEY
+    ALLOWED_HOSTS = local_env.ALLOWED_HOSTS if hasattr(local_env, 'ALLOWED_HOSTS') else None
+    AMPQ_URL = local_env.AMPQ_URL if hasattr(local_env, 'AMPQ_URL') else None
 else:
     DEBUG = os.environ.get('DEBUG')
     SECRET_KEY = os.environ.get('SECRET_KEY')
@@ -39,7 +40,7 @@ else:
     ALLOWED_HOSTS = ALLOWED_HOSTS.split(',')
 if not JWT_SIGN_KEY or JWT_SIGN_KEY == '0':
     JWT_SIGN_KEY = None
-
+TESTING = sys.argv[1:2] == ['test']
 
 # Base django settings
 INSTALLED_APPS = [
@@ -85,12 +86,15 @@ CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
 
 
-# Database
+# Database setup
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 DATABASES = {
     'default': {}
 }
-DATABASES['default'].update(dj_database_url.config(default=DATABASE_URL))
+if TESTING:
+    DATABASES['default'].update(dj_database_url.config(default='sqlite:///db_testing.sqlite3'))
+else:
+    DATABASES['default'].update(dj_database_url.config(default=DATABASE_URL))
 
 
 # Password validation
