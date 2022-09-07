@@ -1,0 +1,8 @@
+
+LETS_ENCRYPT_EMAIL: <email used to manage the certificate generated>
+MICROSERVICE_NAMESPACE: <namespace where the microservice will be installed>
+MICROSERVICE_NAME: <name of the microservice>
+COMMON_NAMESPACE: <name space of the shared resources for microservices>
+DJANGO_IMAGE_NAME: <image where the microservice will be compiled>
+SECRET_SETTINGS_NAME: <name of the k8s secrets for this microservice>
+DOMAIN_NAME: <domain where the microservices will be available>
