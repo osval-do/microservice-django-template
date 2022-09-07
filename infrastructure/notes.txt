@@ -1,0 +1,80 @@
+DATABASE_URL = 'postgres://database1_role:database1_password@189.195.162.26:9021/database1'
+
+docker build -f infrastructure/dockerfile -t aldo7/microservice-django-template .
+docker run aldo7/microservice-django-template
+docker push aldo7/microservice-django-template
+
+k apply -f infrastructure/k8s_deployment.yaml
+k apply -f infrastructure/k8s_service.yaml
+k apply -f infrastructure/k8s_microservice.yaml
+k apply -f infrastructure/k8s_host.yaml
+k get pods
+k get deployments
+k get services
+k describe service microservice-np
+k rollout restart deployment microservice-dpl
+
+
+
+k -n=m8e rollout restart deployment microservice-db-dpl
+
+k -n=m8e rollout restart deployment microservice-dpl
+
+k -n=m8e apply -f infrastructure/k8s_microservice.yaml
+
+k -n=m8e delete -f infrastructure/k8s_microservice.yaml
+
+
+k -n=m8e-host rollout restart StatefulSet message-broker
+
+k -n=m8e-host delete -f infrastructure/k8s_host.yaml
+
+k -n=m8e-host apply -f infrastructure/k8s_host.yaml
+
+minikube service -n=m8e-host message-broker-cip --url
+
+
+kubectl -n={microservice-space} create secret generic m8e-settings \
+  --from-literal=DATABASE_PASSWORD=psqlpass
+  --from-file=JWT_VERIFY_KEY=public.pem
+  --from-file=JWT_SIGN_KEY=private.pem
+
+asdf90210
+valdo qwer123
+
+kubectl -n=m8e create secret generic m8e-settings \
+  --from-literal=DATABASE_PASSWORD=psqlpass \
+  --from-literal=SECRET_KEY=sooi0o2=k@n+lp+=pm%xs$cl9o9Ck@CD8%40r1p8o6w1da3s7 \
+  --from-file=JWT_VERIFY_KEY=public.pem \
+  --from-file=JWT_SIGN_KEY=private.pem
+
+
+
+# Ingress controller in production:
+https://www.digitalocean.com/community/tutorials/how-to-set-up-an-nginx-ingress-with-cert-manager-on-digitalocean-kubernetes
+
+
+
+ kubectl port-forward --namespace=ingress-nginx service/ingress-nginx-controller 8080:80
+
+ eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzUxMiJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTY2MjA2NjQ0NywiaWF0IjoxNjYxOTgwMDQ3LCJqdGkiOiIwYTg1NWZkNzZiNzk0YWIyOTFiYzNlY2M4ZjEyOTI2YiIsInVzZXJfaWQiOjF9.AeQiFm-Nh3laskkmWGrksdU6w1K5Gt_4LmKo0bVHDAbHVEDOKKsSI9f01hagK8ytrETjMsAy11d2tLS121hl2kKg1IiPWabOrTFM9OfDjoVHjg7UGXRpFo6-DYtn_HI0iz5b6Gh1Ez5yPTzyDdqEaoTt7aMizLzcJjjU2Lc9ajukGnscBLcXMe3vsf945kBLtxfwajWyvtMRiiZRkceAJSFW4_lKmCiRFUFb8Wv3woZpc6W5UVfcf6IOVjB89QazIhX5fRE-hY9n6U-gR5nC35TbIz0vmOZkYEQ_eA00nlly5U-0DHGouzwU670ijBDHL2yPV3npxLvBVdvb_oCDjA
+
+
+# certmanager tut
+https://cert-manager.io/docs/tutorials/getting-started-with-cert-manager-on-google-kubernetes-engine-using-lets-encrypt-for-ingress-ssl/
+
+curl -k https://freedns.afraid.org/dynamic/update.php?Vms4ZmFJY1E3UUduZzN5RzlmdE86MjA2Nzc1MzA=
+
+
+# Some micorservices ideas:
+ - A tamplate monitoring service
+ - Backend services for games and apps (nakama/gamespark/)
+
+
+# name ideas:
+ - osvald-
+
+
+# helm
+helm install -f myvalues.yaml myredis ./redis
+helm install -f infrastructure/microservice/values.yaml microservice ./infrastructure/microservice

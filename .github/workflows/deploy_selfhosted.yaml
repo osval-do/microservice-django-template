@@ -25,11 +25,18 @@ jobs:
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}      
           DOCKER_SERVER: ${{ secrets.DOCKER_SERVER }}      
-      - run: docker push IMAGE_NAME
+      - run: docker push $IMAGE_NAME
         env:
           IMAGE_NAME: ${{ secrets.IMAGE_NAME }}
-      - run: kubectl -n=$MICROSERVICE_NAMESPACE rollout restart deployment $MICROSERVICE_NAME-depl
+      - run: helm upgrade -n $MICROSERVICE_NAMESPACE --set LETS_ENCRYPT_EMAIL=$LETS_ENCRYPT_EMAIL,MICROSERVICE_NAME=$MICROSERVICE_NAME,MICROSERVICE_NAMESPACE=$MICROSERVICE_NAMESPACE,DJANGO_IMAGE_NAME=$DJANGO_IMAGE_NAME,SECRET_SETTINGS_NAME=$SECRET_SETTINGS_NAME,DOMAIN_NAME=$DOMAIN_NAME,COMMON_NAMESPACE=$COMMON_NAMESPACE $MICROSERVICE_NAME ./infrastructure/microservice -i
         env:
           MICROSERVICE_NAME: ${{ secrets.MICROSERVICE_NAME }}
           MICROSERVICE_NAMESPACE: ${{ secrets.MICROSERVICE_NAMESPACE }}
+          LETS_ENCRYPT_EMAIL: ${{ secrets.LETS_ENCRYPT_EMAIL }}
+          DJANGO_IMAGE_NAME: ${{ secrets.DJANGO_IMAGE_NAME }}
+          SECRET_SETTINGS_NAME: ${{ secrets.SECRET_SETTINGS_NAME }}
+          DOMAIN_NAME: ${{ secrets.DOMAIN_NAME }}
+          COMMON_NAMESPACE: ${{ secrets.COMMON_NAMESPACE }}
+
+
 

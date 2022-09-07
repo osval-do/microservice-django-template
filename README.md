@@ -88,7 +88,7 @@ docker push your_microservice_image_name
 ```
 
 ## Docker compose 
-
+- TODO
 
 # Kubernetes deployment
 The following chapters explain the installation and manual use of the kubernetes scripts and configurations contained in the template.
@@ -99,12 +99,14 @@ The following chapters explain the installation and manual use of the kubernetes
     - A cloud based kubernetes solution can be used for production. 
 - A container image registry.
 - A configured ingress controller, for example [ingress-nginx](https://kubernetes.github.io/ingress-nginx/deploy/).
+- cert-manager to handle certificates [installation guide](https://cert-manager.io/docs/installation/kubectl/)
+- Helm, used for installation and upgrading kubernetes resources. [installation instructions](https://helm.sh/docs/intro/install/)
 
 ## Namespaces
 A kubernetes namespace is used to isolate this microservice and its resources from other microservices. Not only to prevent collisions with names but for security and management.
-An unique namespace should be decided before starting development a new microservice based on this template.
+An unique namespace and a name should be decided before starting development of a new microservice based on this template.
 
-In the following commands the {microservice-space} is used to identify this name, this needs to be replaced by yours.
+In the following commands and the rest of this guide the {microservice-space} is used to identify the namespace of the microservice, while {microservice-name} is used to give a recognizable name to the microservice inside its namespace.
 
 The following command will create namespace for the microservice:
 ```bash
@@ -148,16 +150,23 @@ kubectl -n={microservice-space} create secret generic m8e-settings \
 
 * Remember change the django secret key for one of you own!
 
-## Generate the resources
-To manually generate the microservices kubernetes resources use the following command:
-```bash
-kubectl -n={microservice-space} apply -f infrastructure/k8s_microservice.yaml
-```
+## Helm files
+The sub folders under infrastructure/ contain helm templates that will setup the required elements to make the microservice work ina kubernetes cluster. To make this work, first [install helm](https://helm.sh/docs/intro/install/) in the same location where the kubernetes cluster is controlled (where the kubectl command is launched).
 
-## Rollout changes to code
-If the code has changed, the image of the container needs to be built again. Use the commands explained in "Testing the docker container". Once uploaded to the image registry server execute the following command to refresh the pods running your microservice:
+* infrastructure/common/ contains the common services and resources used by all microservices based on this template.
+* infrastructure/microservice/ is the template that setups this microservice.
+* infrastructure/values.yaml are the default variables/parameters required by all the templates.
+
+All files in infrastructure/ can be changed in order to accommodate specific needs by the microservices derived from this repository. 
+
+## Setup values
+In order to install in kubernetes trough helm, first create a copy of the infrastructure/values.yaml and store it in infrastructure/local_env.yaml. This file contains the parameters that need to be configured before launching in the kubernetes environment. The explanation of each parameter is included in the file.
+
+## Install or update
+To install or update the microservices kubernetes resources use the following command:
 ```bash
-kubectl -n={microservice-space} rollout restart deployment microservice-dpl
+helm upgrade -n {microservice-common} -f infrastructure/local_env.yaml {microservice-common} ./infrastructure/common  -i --create-namespace
+helm upgrade -n {microservice-space} -f infrastructure/local_env.yaml {microservice-name} ./infrastructure/microservice -i --create-namespace
 ```
 
 ## Debugging
@@ -180,7 +189,7 @@ kubectl -n={microservice-space} logs microservice-dpl-76c78986c4-qsk75
 ### Deleting the microservice resources
 For removing the resources created use the following command:
 ```bash
-kubectl -n={microservice-space} delete -f infrastructure/k8s_microservice.yaml
+helm delete {microservice-name}
 ```
 Warning: The command `delete` might not remove data saved in persistent volumes like the one used for PostgreSQL.
 
@@ -193,10 +202,6 @@ Warning: The command `delete` might not remove data saved in persistent volumes 
 
 # Backend programming
 
-## Authorization and logins
+## Authentication and authorization
 
 ## Message bus
-
-## Data synchronization
-
-## Scheduled jobs

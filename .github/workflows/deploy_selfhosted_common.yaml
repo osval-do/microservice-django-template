@@ -1,0 +1,21 @@
+name: deploy_selfhosted_common
+
+# Deploys the microservice common infrastructure after changes in the helm template are detected.
+
+on:
+  push:
+    branches: [ "main" ]      
+    paths:
+      - 'microservice/infrastructure/common/**'
+
+jobs:
+  production-deploy:  
+    #if: secrets.USE_SELF_HOSTED
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v3
+      - run: helm upgrade -n $COMMON_NAMESPACE --set COMMON_NAMESPACE=$COMMON_NAMESPACE,LETS_ENCRYPT_EMAIL=$LETS_ENCRYPT_EMAIL $COMMON_NAMESPACE ./infrastructure/microservice -i --create-namespace
+        env:
+          COMMON_NAMESPACE: ${{ secrets.COMMON_NAMESPACE }}
+          LETS_ENCRYPT_EMAIL: ${{ secrets.LETS_ENCRYPT_EMAIL }}
+

@@ -1,63 +1,64 @@
 # TODO parse "m8e-host" -> host namespace
-# TODO parse "microservice" ->  microservice name
+# TODO parse "{{ .Values.MICROSERVICE_NAME }}" ->  {{ .Values.MICROSERVICE_NAME }} name
 
 apiVersion: apps/v1
 kind: List
+namespace: {{ .Values.MICROSERVICE_NAMESPACE }}
 items:
 
   # Microservice django app
   - kind: Deployment
     apiVersion: apps/v1
     metadata:
-      name: microservice-dpl
+      name: {{ .Values.MICROSERVICE_NAME }}-dpl
     spec:
       replicas: 1
       selector:
         matchLabels:            
-          app: microservice
+          app: {{ .Values.MICROSERVICE_NAME }}
       template:
         metadata:
           labels:
-            app: microservice
+            app: {{ .Values.MICROSERVICE_NAME }}
         spec:
           containers:
-            - name: microservice
+            - name: {{ .Values.MICROSERVICE_NAME }}
               # Change the following line to the path to obtain the image for the cluster
               # (which can be docker hub or a personal docker repository):
-              image: aldo7/microservice-django-template:latest
+              image: {{ .Values.DJANGO_IMAGE_NAME }}:latest
               envFrom:
                 - secretRef:
-                    name: m8e-settings
+                    name: {{ .Values.SECRET_SETTINGS_NAME }}
               env:
                 - name: POSTGRES_PASSWORD
                   valueFrom:
                     secretKeyRef:
-                      name: m8e-settings
+                      name: {{ .Values.SECRET_SETTINGS_NAME }}
                       key: DATABASE_PASSWORD
                 - name: SECRET_KEY
                   valueFrom:
                     secretKeyRef:
-                        name: m8e-settings
+                        name: {{ .Values.SECRET_SETTINGS_NAME }}
                         key: SECRET_KEY
                 - name: JWT_VERIFY_KEY
                   valueFrom:
                     secretKeyRef:
-                        name: m8e-settings
+                        name: {{ .Values.SECRET_SETTINGS_NAME }}
                         key: JWT_VERIFY_KEY
                 - name: JWT_SIGN_KEY
                   valueFrom:
                     secretKeyRef:
-                        name: m8e-settings
+                        name: {{ .Values.SECRET_SETTINGS_NAME }}
                         key: JWT_SIGN_KEY
                 - name: AMQP_URL
-                  value: "amqp://guest:guest@message-broker-np.m8e-host:5672/"
+                  value: "amqp://guest:guest@message-broker-np.{{ .Values.COMMON_NAMESPACE }}:5672/"
                 - name: ALLOWED_HOSTS
                 # In production this value should be the host:
                   value: "*"
                 - name: DEBUG
                   value: "True"
                 - name: DATABASE_URL
-                  value: "postgres://postgres:$(POSTGRES_PASSWORD)@microservice-db-cip:5432/django_db"
+                  value: "postgres://postgres:$(POSTGRES_PASSWORD)@{{ .Values.MICROSERVICE_NAME }}-db-cip:5432/django_db"
 
                 
 
@@ -65,13 +66,13 @@ items:
   - kind: Service
     apiVersion: v1
     metadata:
-      name: microservice-np
+      name: {{ .Values.MICROSERVICE_NAME }}-np
     spec:
       type: NodePort
       selector:
-        app: microservice
+        app: {{ .Values.MICROSERVICE_NAME }}
       ports:
-        - name: microservice
+        - name: {{ .Values.MICROSERVICE_NAME }}
           protocol: TCP      
           port: 8000
           targetPort: 8000
@@ -80,13 +81,13 @@ items:
   - kind: Service
     apiVersion: v1
     metadata:
-      name: microservice-cip
+      name: {{ .Values.MICROSERVICE_NAME }}-cip
     spec:
       type: ClusterIP
       selector:
-        app: microservice
+        app: {{ .Values.MICROSERVICE_NAME }}
       ports:
-        - name: microservice
+        - name: {{ .Values.MICROSERVICE_NAME }}
           protocol: TCP
           port: 8000
           targetPort: 8000
@@ -95,7 +96,7 @@ items:
   - kind: PersistentVolume
     apiVersion: v1
     metadata:
-      name: microservice-db-vol
+      name: {{ .Values.MICROSERVICE_NAME }}-db-vol
     spec:
       storageClassName: manual
       capacity:
@@ -103,26 +104,26 @@ items:
       accessModes:
         - ReadWriteMany
       hostPath:
-        # Note: This path should be unique for your microservice in minikube:
-        path: "/mnt/data/microservice"
+        # Note: This path should be unique for your {{ .Values.MICROSERVICE_NAME }} in minikube:
+        path: "/mnt/data/{{ .Values.MICROSERVICE_NAME }}"
 
   # Microservice DB (Postgres)
   - kind: StatefulSet
     apiVersion: apps/v1
     metadata:
-      name: microservice-db
+      name: {{ .Values.MICROSERVICE_NAME }}-db
     spec:
       replicas: 1
       selector:
         matchLabels:            
-          app: microservice-db
+          app: {{ .Values.MICROSERVICE_NAME }}-db
       template:
         metadata:
           labels:
-            app: microservice-db
+            app: {{ .Values.MICROSERVICE_NAME }}-db
         spec:
           containers:
-            - name: microservice-db
+            - name: {{ .Values.MICROSERVICE_NAME }}-db
               image: postgres:14.5
               imagePullPolicy: "IfNotPresent"
               ports:
@@ -133,7 +134,7 @@ items:
                 - name: POSTGRES_PASSWORD
                   valueFrom:
                     secretKeyRef:
-                      name: m8e-settings
+                      name: {{ .Values.SECRET_SETTINGS_NAME }}
                       key: DATABASE_PASSWORD
               volumeMounts:
                 - mountPath: /var/lib/postgresql/data
@@ -153,13 +154,13 @@ items:
   - kind: Service
     apiVersion: v1
     metadata:
-      name: microservice-db-cip
+      name: {{ .Values.MICROSERVICE_NAME }}-db-cip
     spec:
       type: ClusterIP
       selector:
-        app: microservice-db
+        app: {{ .Values.MICROSERVICE_NAME }}-db
       ports:
-        - name: microservice-db
+        - name: {{ .Values.MICROSERVICE_NAME }}-db
           protocol: TCP
           port: 5432
           targetPort: 5432
@@ -168,18 +169,23 @@ items:
   - kind: Ingress
     apiVersion: networking.k8s.io/v1  
     metadata:
-      name: microservice-ingress
+      name: {{ .Values.MICROSERVICE_NAME }}-ingress
       annotations:
         kubernetes.io/ingress.class: nginx
+        cert-manager.io/issuer: letsencrypt-staging
     spec:
+      tls:
+      - hosts:
+        - {{ .Values.DOMAIN_NAME }}
+        secretName: echo-tls
       rules:
         - host: localhost
           http:
             paths:
-              - path: /microservice
+              - path: /{{ .Values.MICROSERVICE_NAME }}
                 pathType: Prefix
                 backend:
                   service:
-                    name: microservice-cip
+                    name: {{ .Values.MICROSERVICE_NAME }}-cip
                     port:
                       number: 8000

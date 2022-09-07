@@ -192,6 +192,7 @@ venv.bak/
 
 # Custom settings
 local_env.py
+local_env.yaml
 env.py
 .vscode
 
