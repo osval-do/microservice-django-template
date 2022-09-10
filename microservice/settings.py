@@ -53,7 +53,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'dj_cqrs',
-    'backend',
+    'apps.backend',
 ]
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

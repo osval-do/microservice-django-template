@@ -9,7 +9,7 @@ RUN mkdir -p $BACKEND_PATH
 WORKDIR $BACKEND_PATH
 
 # Copy files
-COPY backend $BACKEND_PATH/backend
+COPY apps $BACKEND_PATH/apps
 COPY microservice $BACKEND_PATH/microservice
 COPY manage.py $BACKEND_PATH
 COPY requirements.txt $BACKEND_PATH
@@ -21,7 +21,7 @@ RUN pip install -r requirements.txt
 # Gather static files
 RUN python manage.py collectstatic --noinput
 
-# django will run in port 8000 trough daphne
+# django should run in port 8000 trough daphne or gunicorn
 EXPOSE 8000
 
 # define the default command to run when starting the container
