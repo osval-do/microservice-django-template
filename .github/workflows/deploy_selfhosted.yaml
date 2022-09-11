@@ -4,17 +4,16 @@ name: deploy_selfhosted
 # the same location where the workflow is running.
 
 on:
-  push:
-    branches: [ "main" ]      
-    paths:
-      - 'microservice/**'
-      - 'backend/**'
-      # add here other django apps and folders here
+  workflow_run:
+    workflows: ["test-backend"]
+    branches: [main]
+    types:
+      - completed
 
 jobs:
-  production-deploy:  
-    #if: secrets.USE_SELF_HOSTED
+  production-deploy:
     runs-on: self-hosted
+    if: ${{ github.event.workflow_run.conclusion == 'success' }} # <- Only deploy if testing passed
     steps:
       - uses: actions/checkout@v3
       - run: docker build -t $IMAGE_NAME .
@@ -33,7 +32,7 @@ jobs:
           MICROSERVICE_NAME: ${{ secrets.MICROSERVICE_NAME }}
           MICROSERVICE_NAMESPACE: ${{ secrets.MICROSERVICE_NAMESPACE }}
           LETS_ENCRYPT_EMAIL: ${{ secrets.LETS_ENCRYPT_EMAIL }}
-          DJANGO_IMAGE_NAME: ${{ secrets.DJANGO_IMAGE_NAME }}
+          DJANGO_IMAGE_NAME: ${{ secrets.IMAGE_NAME }}
           SECRET_SETTINGS_NAME: ${{ secrets.SECRET_SETTINGS_NAME }}
           DOMAIN_NAME: ${{ secrets.DOMAIN_NAME }}
           COMMON_NAMESPACE: ${{ secrets.COMMON_NAMESPACE }}

@@ -132,7 +132,7 @@ The private key should be kept secured and only exposed to the microservice that
 
 To securely transfer confidential configurations to running microservices, is necessary to define them in the namespace of the microservice. This secrets will be passed as environment variables. Use this command to generate them:
 ```bash
-kubectl -n={microservice-space} create secret generic m8e-settings \
+kubectl -n={microservice-space} create secret generic {secrets-name} \
   --from-literal=DATABASE_PASSWORD=<POSTGRESQL_PASSWORD> \
   --from-literal=SECRET_KEY=<A_DJANGO_SECRET_KEY> \
   --from-file=JWT_VERIFY_KEY=public.pem \
@@ -141,7 +141,7 @@ kubectl -n={microservice-space} create secret generic m8e-settings \
 
 A microservice that manages the login and authorization should be configured with this instead:
 ```bash
-kubectl -n={microservice-space} create secret generic m8e-settings \
+kubectl -n={microservice-space} create secret generic {secrets-name} \
   --from-literal=DATABASE_PASSWORD=<POSTGRESQL_PASSWORD> \
   --from-literal=SECRET_KEY=<A_DJANGO_SECRET_KEY> \
   --from-file=JWT_VERIFY_KEY=public.pem \
@@ -149,6 +149,7 @@ kubectl -n={microservice-space} create secret generic m8e-settings \
 ```
 
 * Remember change the django secret key for one of you own!
+* Replace {secrets-name} with a name of your own
 
 ## Helm files
 The sub folders under infrastructure/ contain helm templates that will setup the required elements to make the microservice work ina kubernetes cluster. To make this work, first [install helm](https://helm.sh/docs/intro/install/) in the same location where the kubernetes cluster is controlled (where the kubectl command is launched).
@@ -193,15 +194,52 @@ helm delete {microservice-name}
 ```
 Warning: The command `delete` might not remove data saved in persistent volumes like the one used for PostgreSQL.
 
+
+
 # Continuous Integration/Deployment
 
-### Github workflows
+AutoDevOps comes integrated in this template, but there are some needed configurations to be set depending on where the repository is being hosted.
 
-### Gitlab pipelines
+The next list are the secrets used by the autodevops automation that need to be configured in the repository. If the repository is in GitHub, the secrets need to be configured in Settings>Secrets. In Gitlab this is in Settings>CI/CD>Variables,
+
+|Name | Description  |
+| --- | --- |
+|IMAGE_NAME|Name of the image that will be generated for the microservice container
+|DOCKER_USERNAME|Username for the docker image repository
+|DOCKER_PASSWORD|Password for the docker image repository
+|DOCKER_SERVER|Address for the image repository (i.e. [dockerhub.com](https://hub.docker.com/) or self hosted)
+|MICROSERVICE_NAMESPACE|Namespace given to this microservice
+|LETS_ENCRYPT_EMAIL|Email to admin any generated Let's Encrypt certificate 
+|MICROSERVICE_NAME|Name to be prefixed to kubernetes resources generated for this microservice
+|SECRET_SETTINGS_NAME|Name of the secrets that are shared between the microservices (used as {secrets-name} in the manual)
+|DOMAIN_NAME|A DNS name used to access the microservices (required for certificate generation)
+|COMMON_NAMESPACE|The name of the namespace with shared services
+
+## Github workflows
+
+The following workflows are included in .github/workflows, you can use them as a basis for your own:
+
+* **.github/workflows/test_backend.yaml** Tests the Django project.
+* **deploy_selfhosted_common.yaml** Updates the common services after pushing changes to the helm files. Requires a selfhosted runner.
+* **deploy_selfhosted.yaml** Deploys changes to the microservice code to a kubernetes cluster after passing the tests workflow. Requires a selfhosted runner.
+
+## Gitlab pipelines
+
+
 
 
 # Backend programming
 
-## Authentication and authorization
+This template is planned to run amongst other microservices based on this same template. To have an orderly coexistence of the services this Django project comes preconfigured with some tools to help in this endeavour.
 
-## Message bus
+## Authentication
+
+To prevent having to start a Django user session in each of the microservices, the library [`djangorestframework-simplejwt`](https://pypi.org/project/djangorestframework-simplejwt/) is used for sharing the session with common JSON web tokens. A single microservice should handle the authentication of users, by giving it a private key (as described in the secrets section of this manual). Your application frontend should use the given JWT when calling any other microservice in the cluster. Other microservices will be configured to use the public part of the key, and will be able to verify the user.
+
+## Communication between services
+
+There are means to make two microservices talk to each other (for example using their ClusterIP service). But a more recommended way is to use the included message broker RabbitMQ, which should be installed in the common namespace. Complex communication can be more easily solved with by sending an receiving event messages.
+
+## Data synchronization
+
+Expanding in the previous topic, this template includes the [`django-cqrs`](https://pypi.org/project/django-cqrs/) library that implements an event system for replicating data across multiple microservices using RabbitMQ. You can find more info about how to use and configure your project in the [documentation](https://django-cqrs.readthedocs.io/en/latest/).
