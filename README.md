@@ -7,18 +7,20 @@ This repository contains a template that can be used or aid in the following sit
 - Add resiliency in deployment, by only updating parts of a system and having lose connection between microservices.
 - Automatic management of deployment and scaling.
 
-# A primer in microservices
-Microservices allows use to tackle development of complex systems, and thus, there area a lot of concepts involved. Is not necessary to get deep in to this topics, but a general understanding can help in development and deployment of software. Following is a list of tools and concepts used in this template:
+Microservices allows use to tackle development of complex systems, and thus, there area a lot of concepts involved. Is not necessary to get deep in to this topics, but a general understanding can help in development and deployment of software. 
+Following is a list of tools and concepts used in this template:
 
-- Microservice TODO
-- Backend
+- Microservices
 - Containers
 - Message broker
+- Django
+- REST
 - JWT
+- Kubernetes
 - Devops, AutoDevOps
 
 ## Diagram of this template
-![Image](docs/microservice/k8s_diagram.png?raw=true)
+![Image](https://osval-do.github.io/repos/microservice-django-template/k8s_diagram.png)
 
 #  Local development
 
@@ -66,9 +68,10 @@ This is the list of the variables:
 
 # Docker deployment
 
+
 ## Requirements
 
-
+* A system with Docker installed.
 
 ## Testing the container
 
@@ -225,7 +228,7 @@ The following workflows are included in .github/workflows, you can use them as a
 
 ## Gitlab pipelines
 
-
+- TODO
 
 
 # Backend programming
